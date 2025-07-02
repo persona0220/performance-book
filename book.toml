@@ -1,0 +1,5 @@
+[book]
+authors = ["Sujin Park"]
+language = "en"
+src = "src"
+title = "Principles and Methodologies for Serial Performance Optimization"
