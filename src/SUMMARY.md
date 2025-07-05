@@ -1,12 +1,12 @@
 # Summary
 
-[Introduction](intro.md)
-- [What's Covered](scope.md)
+[Introduction](./intro.md)
 
-# Theory for Humans
+# Serial Performance Optimization
 
-- [The Three Principles](principles.md)
-- [The Eight Methodologies](methodologies.md)
+- [Serial Performance](./serial.md)
+- [The Three Principles](./principles.md)
+- [The Eight Methodologies](./methodologies.md)
     - [Batching](./batching.md)
     - [Caching](./caching.md)
     - [Precomputing](./precomputing.md)
