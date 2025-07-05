@@ -168,10 +168,161 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="whats-covered"><a class="header" href="#whats-covered">What's Covered</a></h1>
+<p>This site presents a structured set of concepts and strategies for optimizing
+sequential performance in modern systems.
+It is a restructured and accessible version of the ideas presented in the
+paper <em>“<a href="https://www.usenix.org/conference/osdi25/presentation/park-sujin">Principles and Methodologies for Serial Performance Optimization
+(OSDI’25)</a>”</em>.</p>
+<p>The content is intended to serve as a reference and guide, helping system
+designers and engineers identify opportunities for improving latency and
+throughput when facing performance bottlenecks, especially in the parts of the
+system that cannot be parallelized.</p>
+<h2 id="why-sequential-performance"><a class="header" href="#why-sequential-performance">Why Sequential Performance?</a></h2>
+<p>Improving performance has long been a core challenge in system design. Even with
+continued progress in parallel computing, many critical bottlenecks arise from
+sequential execution, where code must run in a specific order and cannot be
+parallelized due to logical or data dependencies.</p>
+<p>According to Amdahl’s Law, the portion of a system that remains sequential
+limits the maximum achievable speedup. So, even in highly parallel systems,
+improving sequential performance is essential for making meaningful overall
+gains.</p>
+<h2 id="a-structured-approach"><a class="header" href="#a-structured-approach">A Structured Approach</a></h2>
+<p>To make sequential performance optimization more systematic, this guide
+introduces <em>three foundational principles</em>:</p>
+<ul>
+<li><strong>Removal</strong> – Eliminate unnecessary tasks.</li>
+<li><strong>Replacement</strong> – Substitute with faster alternatives.</li>
+<li><strong>Reordering</strong> – Execute tasks in a more efficient sequence.</li>
+</ul>
+<p>These principles are the basis for <em>eight actionable methodologies</em> that appear
+again and again in systems research and practice:</p>
+<ul>
+<li>Batching</li>
+<li>Caching</li>
+<li>Precomputing</li>
+<li>Deferring</li>
+<li>Relaxation</li>
+<li>Contextualization</li>
+<li>Hardware Specialization</li>
+<li>Layering</li>
+</ul>
+<h2 id="more-than-theory"><a class="header" href="#more-than-theory">More Than Theory</a></h2>
+<p>Each methodology in this guide is explained through clear examples, diagrams,
+and patterns found in real systems. The goal is not only to provide insight, but
+also to serve as a <em>checklist</em> and <em>design vocabulary</em> that helps you:</p>
+<ul>
+<li>Understand where inefficiencies come from</li>
+<li>Apply proven optimization strategies</li>
+<li>Discover new directions for improving throughput and latency</li>
+</ul>
+<p>To bridge theory and application, the final section introduces
+<a href="./sysgpt.html">SysGPT</a>, a language model fine-tuned to suggest system performance
+improvements using this exact methodology.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="serial-performance"><a class="header" href="#serial-performance">Serial Performance</a></h1>
+<p>Performance optimization in system design often centers around making things
+faster or more scalable. While parallelism plays a major role in this, one
+critical limitation remains: some parts of the system simply cannot be
+parallelized.</p>
+<p>These sequential sections limit overall performance, even in systems with many
+cores or distributed architecture.</p>
+<h2 id="why-sequential-performance-matters"><a class="header" href="#why-sequential-performance-matters">Why Sequential Performance Matters</a></h2>
+<p>These sequential components—the portions of execution that must occur in a
+fixed order—have a disproportionate impact on overall performance.</p>
+<p>The fundamental reason is captured by <em>Amdahl’s Law</em>, which states that the
+maximum speedup of a program is limited by the fraction that must be executed
+sequentially.</p>
+<p>$$
+S_{\text{parallel}} = \frac{1}{F_{\text{serial}} + \frac{F_{\text{parallel}}}{N}}
+$$</p>
+<ul>
+<li>$S_{\text{parallel}}$:   the maximum speedup with $N$ processors</li>
+<li>$F_{\text{serial}}$:   the fraction of the workload that is sequential</li>
+<li>$F_{\text{parallel}}$:   the fraction that can be parallelized</li>
+</ul>
+<p>Even with an infinite number of processors, the sequential portion becomes the
+limiting factor. In real-world systems, sequential work is common in areas like
+I/O, memory management, synchronization, and task scheduling. This is why
+reducing the cost of sequential execution is critical, especially in systems
+where parallelism cannot be fully exploited.</p>
+<h2 id="modeling-serial-execution"><a class="header" href="#modeling-serial-execution">Modeling Serial Execution</a></h2>
+<p>To reason about serial performance more clearly, we define the work as a
+sequence of tasks:</p>
+<p>$$
+S_n = {t_1, t_2, \dots, t_n}
+$$</p>
+<ul>
+<li>$S_n$ :   a sequence of $n$ tasks to be executed in order</li>
+<li>$t_i$ :   an individual task</li>
+</ul>
+<p>This sequence models one logical unit of work, commonly referred to as an
+<em>epoch</em>. Many systems repeatedly execute similar task sequences—such as
+request handling loops, model training steps, or update cycles—and optimizing
+these repeated patterns is often the most effective path to performance gains.</p>
+<p>Each task $t_i$ contributes directly to the overall runtime of the epoch.
+Therefore, the cost of processing the sequence, denoted by $F(S_n)$, is
+deterministically influenced by both the content and order of the sequence
+$S_n$, as well as by the underlying hardware $F$ on which it runs. This
+deterministic nature makes it possible to reason precisely about optimizations
+and their effects.</p>
+<h2 id="latency-and-throughput"><a class="header" href="#latency-and-throughput">Latency and Throughput</a></h2>
+<p>This model allows us to represent two central performance metrics:</p>
+<h3 id="latency"><a class="header" href="#latency">Latency</a></h3>
+<p>The time required to complete a single epoch:</p>
+<p>$$
+\text{latency} = F(S_n)
+$$</p>
+<p>Where $F(S_n)$ is the total execution time of the sequence.</p>
+<h3 id="throughput"><a class="header" href="#throughput">Throughput</a></h3>
+<p>The number of epochs that can be completed within a given time:</p>
+<p>$$
+\text{throughput} = N, \quad \text{such that} \quad N \cdot F(S_n) &lt; T
+$$</p>
+<p>Here, $T$ is a fixed time budget (e.g. 1 second), and $N$ is the number of full epochs that can be completed.</p>
+<p>These definitions provide a simple but powerful model for thinking about serial
+performance. The remainder of this guide focuses on how to optimize $F(S_n)$
+using structured and feasible strategies.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="the-three-princinples"><a class="header" href="#the-three-princinples">The Three Princinples</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="the-eight-methodologies"><a class="header" href="#the-eight-methodologies">The Eight Methodologies</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="batching"><a class="header" href="#batching">Batching</a></h1>
+<p>When the cost for computing a batch of items is lower than the total cost for
+computing each item individually, combining these items into batches will
+enhance overall efficiency.</p>
+<p>As shown in Table 1 (a), for every epoch, duplicate
+costs (x 2 , x 4 and x 6 ) are incurred across epochs, and these costs are
+repetitively accrued with each iteration of epochs. With batching, depicted in
+Table 1 (b), these individual blocks are merged into one big block (x 7 ). To
+ensure the efficacy of batching, two conditions must be satisfied: the length of
+the optimized sequence should be shorter than that of the original sequence, and
+the running time for batched items should be shorter.</p>
+<p>In terms of the three principles (§2.1),batching is a methodology which can
+effectively leverage all the three principles. First, batching commonly yields
+benefits through coalesced computation. By coalescing duplicate tasks together,
+particularly when each task incurs significant overhead, the overall runtime can
+be reduced. Upon comparing of the original and batched sequences, the latter
+removes x 2 and x 4 (P rm ), and replaces x 6 with x 7 (P rep ). Alongside P rm
+and P rep , the overall runtime improves. NEVE ( 1 ) is an example of this
+approach (see Table 2 for details).</p>
+<p>Batching also inherently defers earlier tasks until a batch of tasks is
+gathered. Consequently, it has the potential to decrease the overall number of
+tasks to be processed by discarding stale tasks at the time of batched request
+(P rm ), thereby reducing the overall runtime. For instance, group commit and
+write buffer batch multiple updates and apply modifications in a deferred and
+batched manner, thereby some stale data that has already been deleted or updated
+does not need to be committed anymore. EAW ( 2 ) implements this approach by
+enabling applications to update batched items in the log prior to commit.</p>
+<p>In addition, when batching is applied, the order of tasks is reordered (P ord ).
+For example, initially x 2 was located between x 1 and x 3 , but after
+optimization, x 1 and x 3 will be executed consecutively. Therefore, batching
+might be employed to maximize the spatial and temporal locality of data. IX ( 3
+) efficiently adopts this strategy to batch requests at every stage of the
+network stack.</p>
+<p>This concept is also closely interwined with caching (§3.2) as batching
+eventually provides greater caching opportunities with the improved locality.</p>
+<p>In general, batched items can achieve higher bandwidth and throughput by
+eliminating redundant costs across tasks. Nevertheless, this approach can lead
+to extended latency, as initial earlier tasks in a batch might wait for
+subsequent tasks to arrive, and processing a batch usually takes longer than
+processing an individual task.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="caching"><a class="header" href="#caching">Caching</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="precomputing"><a class="header" href="#precomputing">Precomputing</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="deferring"><a class="header" href="#deferring">Deferring</a></h1>

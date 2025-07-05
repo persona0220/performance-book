@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>What&#x27;s Covered</title>
+        <title>Serial Performance</title>
 
 
         <!-- Custom HTML head -->
@@ -166,7 +166,69 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="whats-covered"><a class="header" href="#whats-covered">What's Covered</a></h1>
+                        <h1 id="serial-performance"><a class="header" href="#serial-performance">Serial Performance</a></h1>
+<p>Performance optimization in system design often centers around making things
+faster or more scalable. While parallelism plays a major role in this, one
+critical limitation remains: some parts of the system simply cannot be
+parallelized.</p>
+<p>These sequential sections limit overall performance, even in systems with many
+cores or distributed architecture.</p>
+<h2 id="why-sequential-performance-matters"><a class="header" href="#why-sequential-performance-matters">Why Sequential Performance Matters</a></h2>
+<p>These sequential components—the portions of execution that must occur in a
+fixed order—have a disproportionate impact on overall performance.</p>
+<p>The fundamental reason is captured by <em>Amdahl’s Law</em>, which states that the
+maximum speedup of a program is limited by the fraction that must be executed
+sequentially.</p>
+<p>$$
+S_{\text{parallel}} = \frac{1}{F_{\text{serial}} + \frac{F_{\text{parallel}}}{N}}
+$$</p>
+<ul>
+<li>$S_{\text{parallel}}$:   the maximum speedup with $N$ processors</li>
+<li>$F_{\text{serial}}$:   the fraction of the workload that is sequential</li>
+<li>$F_{\text{parallel}}$:   the fraction that can be parallelized</li>
+</ul>
+<p>Even with an infinite number of processors, the sequential portion becomes the
+limiting factor. In real-world systems, sequential work is common in areas like
+I/O, memory management, synchronization, and task scheduling. This is why
+reducing the cost of sequential execution is critical, especially in systems
+where parallelism cannot be fully exploited.</p>
+<h2 id="modeling-serial-execution"><a class="header" href="#modeling-serial-execution">Modeling Serial Execution</a></h2>
+<p>To reason about serial performance more clearly, we define the work as a
+sequence of tasks:</p>
+<p>$$
+S_n = {t_1, t_2, \dots, t_n}
+$$</p>
+<ul>
+<li>$S_n$ :   a sequence of $n$ tasks to be executed in order</li>
+<li>$t_i$ :   an individual task</li>
+</ul>
+<p>This sequence models one logical unit of work, commonly referred to as an
+<em>epoch</em>. Many systems repeatedly execute similar task sequences—such as
+request handling loops, model training steps, or update cycles—and optimizing
+these repeated patterns is often the most effective path to performance gains.</p>
+<p>Each task $t_i$ contributes directly to the overall runtime of the epoch.
+Therefore, the cost of processing the sequence, denoted by $F(S_n)$, is
+deterministically influenced by both the content and order of the sequence
+$S_n$, as well as by the underlying hardware $F$ on which it runs. This
+deterministic nature makes it possible to reason precisely about optimizations
+and their effects.</p>
+<h2 id="latency-and-throughput"><a class="header" href="#latency-and-throughput">Latency and Throughput</a></h2>
+<p>This model allows us to represent two central performance metrics:</p>
+<h3 id="latency"><a class="header" href="#latency">Latency</a></h3>
+<p>The time required to complete a single epoch:</p>
+<p>$$
+\text{latency} = F(S_n)
+$$</p>
+<p>Where $F(S_n)$ is the total execution time of the sequence.</p>
+<h3 id="throughput"><a class="header" href="#throughput">Throughput</a></h3>
+<p>The number of epochs that can be completed within a given time:</p>
+<p>$$
+\text{throughput} = N, \quad \text{such that} \quad N \cdot F(S_n) &lt; T
+$$</p>
+<p>Here, $T$ is a fixed time budget (e.g. 1 second), and $N$ is the number of full epochs that can be completed.</p>
+<p>These definitions provide a simple but powerful model for thinking about serial
+performance. The remainder of this guide focuses on how to optimize $F(S_n)$
+using structured and feasible strategies.</p>
 
                     </main>
 

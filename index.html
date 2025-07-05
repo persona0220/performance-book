@@ -167,13 +167,63 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>This site presents a structured set of concepts and strategies for optimizing
+sequential performance in modern systems.
+It is a restructured and accessible version of the ideas presented in the
+paper <em>“<a href="https://www.usenix.org/conference/osdi25/presentation/park-sujin">Principles and Methodologies for Serial Performance Optimization
+(OSDI’25)</a>”</em>.</p>
+<p>The content is intended to serve as a reference and guide, helping system
+designers and engineers identify opportunities for improving latency and
+throughput when facing performance bottlenecks, especially in the parts of the
+system that cannot be parallelized.</p>
+<h2 id="why-sequential-performance"><a class="header" href="#why-sequential-performance">Why Sequential Performance?</a></h2>
+<p>Improving performance has long been a core challenge in system design. Even with
+continued progress in parallel computing, many critical bottlenecks arise from
+sequential execution, where code must run in a specific order and cannot be
+parallelized due to logical or data dependencies.</p>
+<p>According to Amdahl’s Law, the portion of a system that remains sequential
+limits the maximum achievable speedup. So, even in highly parallel systems,
+improving sequential performance is essential for making meaningful overall
+gains.</p>
+<h2 id="a-structured-approach"><a class="header" href="#a-structured-approach">A Structured Approach</a></h2>
+<p>To make sequential performance optimization more systematic, this guide
+introduces <em>three foundational principles</em>:</p>
+<ul>
+<li><strong>Removal</strong> – Eliminate unnecessary tasks.</li>
+<li><strong>Replacement</strong> – Substitute with faster alternatives.</li>
+<li><strong>Reordering</strong> – Execute tasks in a more efficient sequence.</li>
+</ul>
+<p>These principles are the basis for <em>eight actionable methodologies</em> that appear
+again and again in systems research and practice:</p>
+<ul>
+<li>Batching</li>
+<li>Caching</li>
+<li>Precomputing</li>
+<li>Deferring</li>
+<li>Relaxation</li>
+<li>Contextualization</li>
+<li>Hardware Specialization</li>
+<li>Layering</li>
+</ul>
+<h2 id="more-than-theory"><a class="header" href="#more-than-theory">More Than Theory</a></h2>
+<p>Each methodology in this guide is explained through clear examples, diagrams,
+and patterns found in real systems. The goal is not only to provide insight, but
+also to serve as a <em>checklist</em> and <em>design vocabulary</em> that helps you:</p>
+<ul>
+<li>Understand where inefficiencies come from</li>
+<li>Apply proven optimization strategies</li>
+<li>Discover new directions for improving throughput and latency</li>
+</ul>
+<p>To bridge theory and application, the final section introduces
+<a href="./sysgpt.html">SysGPT</a>, a language model fine-tuned to suggest system performance
+improvements using this exact methodology.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
 
-                            <a rel="next prefetch" href="scope.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="serial.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -184,7 +234,7 @@
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
 
-                    <a rel="next prefetch" href="scope.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="serial.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
