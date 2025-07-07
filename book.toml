@@ -1,0 +1,10 @@
+[book]
+title = "Principles and Methodologies for Serial Performance Optimization"
+authors = ["Sujin Park"]
+language = "en"
+src = "src"
+
+[output.html]
+destination = "book"
+smart-punctuation = true
+[preprocessor.katex]
